@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Controller
 public class MainController {
@@ -67,7 +68,8 @@ public class MainController {
             @Valid Message message,
             BindingResult bindingResult,
             Model model,
-            @RequestParam("file") MultipartFile file
+            @RequestParam("file") MultipartFile file,
+            @PageableDefault Pageable pageable
     ) throws IOException {
         message.setAuthor(user);
 
@@ -80,9 +82,15 @@ public class MainController {
             model.addAttribute("message", null);
             messageRepo.save(message);
         }
+
         Iterable<Message> messages = messageRepo.findAll();
+        List<Message> messagesList = StreamSupport.stream(messages.spliterator(), false)
+                .collect(Collectors.toList());
+        Page<Message> pages = new PageImpl<Message>(messagesList, pageable, messagesList.size());
         model.addAttribute("messages", messages);
         model.addAttribute("filter", ""); // AD---------------------------------------THIS
+        model.addAttribute("page", pages);
+        model.addAttribute("url", "/main");
         return "main";
     }
 
